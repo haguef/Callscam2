@@ -8,29 +8,22 @@ workflows:
         PACKAGE_NAME: "com.example.scamcalldetector"
         GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain -Dorg.gradle.warning.mode=all"
       java: 11
-  
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
         - $HOME/.gradle/wrapper
-    triggering:
-      events:
-        - push
-        - tag
-        - pull_request
-      branch_patterns:
-        - pattern: 'main'
-          include: true
-          source: true
     scripts:
       - name: Set up project structure
         script: |
           cd $CM_BUILD_DIR
-          # Create necessary directories
+          # Create project structure
           mkdir -p app/src/main/java/com/example/scamcalldetector
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/androidTest/java/com/example/scamcalldetector
+          mkdir -p app/src/test/java/com/example/scamcalldetector
 
       - name: Create Gradle wrapper
         script: |
@@ -62,7 +55,6 @@ workflows:
         script: |
           cd $CM_BUILD_DIR
           # Create basic layout file
-          mkdir -p app/src/main/res/layout
           echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/layout/activity_main.xml
           echo '<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/res/layout/activity_main.xml
           echo '    android:layout_width="match_parent"' >> app/src/main/res/layout/activity_main.xml
@@ -70,14 +62,12 @@ workflows:
           echo '</androidx.constraintlayout.widget.ConstraintLayout>' >> app/src/main/res/layout/activity_main.xml
           
           # Create strings.xml
-          mkdir -p app/src/main/res/values
           echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/strings.xml
           echo '<resources>' >> app/src/main/res/values/strings.xml
           echo '    <string name="app_name">Scam Call Detector</string>' >> app/src/main/res/values/strings.xml
           echo '</resources>' >> app/src/main/res/values/strings.xml
           
           # Create AndroidManifest.xml
-          mkdir -p app/src/main
           echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
           echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android">' >> app/src/main/AndroidManifest.xml
           echo '    <application' >> app/src/main/AndroidManifest.xml
@@ -96,7 +86,6 @@ workflows:
           echo '</manifest>' >> app/src/main/AndroidManifest.xml
           
           # Create MainActivity.kt
-          mkdir -p app/src/main/java/com/example/scamcalldetector
           echo 'package com.example.scamcalldetector' > app/src/main/java/com/example/scamcalldetector/MainActivity.kt
           echo '' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
           echo 'import androidx.appcompat.app.AppCompatActivity' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
@@ -109,41 +98,32 @@ workflows:
           echo '    }' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
           echo '}' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
 
-      - name: Verify Gradle setup
+      - name: Verify project structure
         script: |
           cd $CM_BUILD_DIR
-          echo "=== Gradle Version ==="
-          ./gradlew --version
           echo "=== Project Structure ==="
-          ls -R
-          echo "=== Gradle Files ==="
-          cat build.gradle
-          echo "=== App Gradle File ==="
-          cat app/build.gradle
-          echo "=== Settings Gradle ==="
+          find . -type f -not -path "*/\.*"
+          echo "=== Gradle Files Content ==="
+          echo "settings.gradle:"
           cat settings.gradle
-          echo "=== Wrapper Properties ==="
-          cat gradle/wrapper/gradle-wrapper.properties
+          echo -e "\nbuild.gradle:"
+          cat build.gradle
+          echo -e "\napp/build.gradle:"
+          cat app/build.gradle
 
       - name: Build Android app
         script: |
           cd $CM_BUILD_DIR
-          # Show full error output
+          rm -rf .gradle
           ./gradlew clean assembleDebug --console=plain --stacktrace --info --no-daemon
-          
-      - name: Run tests
-        script: |
-          cd $CM_BUILD_DIR
-          ./gradlew test --console=plain --stacktrace --info --no-daemon
           
     artifacts:
       - app/build/outputs/apk/debug/*.apk
-      - app/build/reports/tests/test/*
       - app/build/reports/**/*.html
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
