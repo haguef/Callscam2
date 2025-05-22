@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.channelFlow
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.channels.awaitClose
+import com.google.api.gax.rpc.BidiStreamingCallable
 
 class CallDetectionService : InCallService() {
     private var currentCall: Call? = null
@@ -195,10 +196,12 @@ class CallDetectionService : InCallService() {
             }
         }
 
-        val requestObserver = speechClient?.streamingRecognizeCallable()
-            ?.bidiStreamingCall(responseObserver)
+        val callable: BidiStreamingCallable<StreamingRecognizeRequest, StreamingRecognizeResponse> =
+            speechClient?.streamingRecognizeCallable() ?: throw IllegalStateException("Speech client not initialized")
+        
+        val requestObserver = callable.bidiStreamingCall(responseObserver, null)
 
-        requestObserver?.onNext(
+        requestObserver.onNext(
             StreamingRecognizeRequest.newBuilder()
                 .setStreamingConfig(streamingConfig)
                 .build()
@@ -208,7 +211,7 @@ class CallDetectionService : InCallService() {
         while (isRecording.get()) {
             val readSize = audioRecord?.read(buffer, 0, buffer.size) ?: -1
             if (readSize > 0) {
-                requestObserver?.onNext(
+                requestObserver.onNext(
                     StreamingRecognizeRequest.newBuilder()
                         .setAudioContent(ByteString.copyFrom(buffer, 0, readSize))
                         .build()
@@ -216,15 +219,15 @@ class CallDetectionService : InCallService() {
             }
         }
 
-        requestObserver?.onCompleted()
+        requestObserver.onCompleted()
         
         awaitClose {
-            requestObserver?.onCompleted()
+            requestObserver.onCompleted()
         }
     }
 
     private fun checkForScamKeywords(transcription: String) {
-        val lowercaseTranscription = transcription.toLowerCase()
+        val lowercaseTranscription = transcription.lowercase()
         
         for (keyword in scamKeywords) {
             if (lowercaseTranscription.contains(keyword)) {
