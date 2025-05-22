@@ -8,7 +8,7 @@ workflows:
         PACKAGE_NAME: "com.example.scamcalldetector"
         GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain -Dorg.gradle.warning.mode=all"
       java: 11
-  
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -112,21 +112,29 @@ workflows:
       - name: Verify Gradle setup
         script: |
           cd $CM_BUILD_DIR
+          echo "=== Gradle Version ==="
           ./gradlew --version
-          ls -la
-          ls -la app/
-          ls -la gradle/wrapper/
+          echo "=== Project Structure ==="
+          ls -R
+          echo "=== Gradle Files ==="
+          cat build.gradle
+          echo "=== App Gradle File ==="
+          cat app/build.gradle
+          echo "=== Settings Gradle ==="
+          cat settings.gradle
+          echo "=== Wrapper Properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
 
       - name: Build Android app
         script: |
           cd $CM_BUILD_DIR
           # Show full error output
-          ./gradlew clean assembleDebug --console=plain --stacktrace --info
+          ./gradlew clean assembleDebug --console=plain --stacktrace --info --no-daemon
           
       - name: Run tests
         script: |
           cd $CM_BUILD_DIR
-          ./gradlew test --console=plain --stacktrace --info
+          ./gradlew test --console=plain --stacktrace --info --no-daemon
           
     artifacts:
       - app/build/outputs/apk/debug/*.apk
@@ -135,7 +143,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
