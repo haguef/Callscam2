@@ -9,15 +9,22 @@ workflows:
     scripts:
       - name: Set up local.properties
         script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$FCI_BUILD_DIR/local.properties"
+      - name: Set up Gradle
+        script: |
+          cd $FCI_BUILD_DIR
+          gradle wrapper
       - name: Clean build directory
         script: |
+          cd $FCI_BUILD_DIR
+          chmod +x ./gradlew
           ./gradlew clean
       - name: Build Android app
         script: |
+          cd $FCI_BUILD_DIR
           ./gradlew assembleDebug
     artifacts:
-      - build/outputs/**/*.apk
+      - app/build/outputs/**/*.apk
     publishing:
       email:
         recipients:
