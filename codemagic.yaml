@@ -1,0 +1,116 @@
+workflows:
+  android-app:
+    name: Android App
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      vars:
+        PACKAGE_NAME: "com.example.scamcalldetector"
+      java: 11
+      android_sdk: 33
+    scripts:
+      - name: Install tools
+        script: |
+          brew install dos2unix
+          
+      - name: Set up build environment
+        script: |
+          # Create fresh working directory
+          WORK_DIR="/tmp/android-build"
+          rm -rf "$WORK_DIR"
+          mkdir -p "$WORK_DIR"
+          cp -r . "$WORK_DIR/"
+          cd "$WORK_DIR"
+          
+          # Fix line endings for all script files
+          find . -type f -name "*.sh" -exec dos2unix {} \;
+          find . -type f -name "gradlew" -exec dos2unix {} \;
+          dos2unix gradlew
+          
+          # Clean any existing Gradle state
+          rm -rf ~/.gradle
+          mkdir -p ~/.gradle
+          
+          # Set up Gradle properties with more memory
+          echo "org.gradle.daemon=false" > ~/.gradle/gradle.properties
+          echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxPermSize=1024m -XX:+HeapDumpOnOutOfMemoryError" >> ~/.gradle/gradle.properties
+          echo "android.useAndroidX=true" >> ~/.gradle/gradle.properties
+          echo "android.enableJetifier=true" >> ~/.gradle/gradle.properties
+          
+          # Create local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          
+          # Set up Gradle wrapper
+          mkdir -p gradle/wrapper
+          cd gradle/wrapper
+          wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
+          wget https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradle/wrapper/gradle-wrapper.jar
+          cd ../..
+          
+          # Create gradle-wrapper.properties
+          printf "%s\n" \
+            "distributionBase=GRADLE_USER_HOME" \
+            "distributionPath=wrapper/dists" \
+            "distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip" \
+            "zipStoreBase=GRADLE_USER_HOME" \
+            "zipStorePath=wrapper/dists" > gradle/wrapper/gradle-wrapper.properties
+          
+          # Fix permissions
+          chmod +x gradlew
+          
+          # Debug info
+          echo "=== Project Structure ==="
+          ls -R
+          
+          echo "=== Environment Info ==="
+          java -version
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          echo "JAVA_HOME: $JAVA_HOME"
+          
+          echo "=== Gradle Files Content ==="
+          echo "Content of settings.gradle:"
+          cat settings.gradle
+          echo "Content of build.gradle:"
+          cat build.gradle
+          echo "Content of app/build.gradle:"
+          cat app/build.gradle
+
+      - name: Build Android app
+        script: |
+          cd /tmp/android-build
+          # Ensure gradlew has correct line endings
+          dos2unix gradlew
+          chmod +x gradlew
+          
+          # Initialize Gradle
+          echo "=== Initialize Gradle ==="
+          ./gradlew --version
+          
+          # Show available tasks
+          echo "=== Available Gradle Tasks ==="
+          ./gradlew tasks
+          
+          # Clean project
+          echo "=== Running Gradle Clean ==="
+          ./gradlew clean --info --stacktrace
+          
+          # Show dependencies
+          echo "=== Project Dependencies ==="
+          ./gradlew :app:dependencies --configuration implementation
+          
+          # Build debug APK
+          echo "=== Building Debug APK ==="
+          ./gradlew :app:assembleDebug --info --stacktrace
+          
+          echo "=== Build Output Directory Contents ==="
+          ls -la app/build/outputs/apk/debug/
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: true 
