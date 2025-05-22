@@ -8,8 +8,6 @@ workflows:
         PACKAGE_NAME: "com.example.scamcalldetector"
         GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain -Dorg.gradle.warning.mode=all"
       java: 17
-      android:
-        build-tools-version: "33.0.2"
     cache:
       cache_paths:
         - $HOME/.gradle/caches
