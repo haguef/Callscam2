@@ -8,7 +8,7 @@ workflows:
         PACKAGE_NAME: "com.example.scamcalldetector"
         GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain -Dorg.gradle.warning.mode=all"
       java: 11
-      android_sdk: 33
+  
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -135,7 +135,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - user@example.com
+          - paulf.hague@gmail.com
         notify:
           success: true
           failure: true 
