@@ -7,7 +7,7 @@ workflows:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
       java: 11
-  
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -22,30 +22,43 @@ workflows:
           include: true
           source: true
     scripts:
-      - name: Install Gradle
+      - name: Set up project structure
         script: |
           cd $CM_BUILD_DIR
-          # Install Gradle
-          wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
-          unzip gradle-7.6-bin.zip
-          export GRADLE_HOME=$CM_BUILD_DIR/gradle-7.6
-          export PATH=$GRADLE_HOME/bin:$PATH
-          
-          # Create Gradle wrapper files
-          gradle wrapper
-          
-          # Verify Gradle and wrapper installation
-          gradle --version
-          ./gradlew --version
+          # Create necessary directories
+          mkdir -p app/src/main/java/com/example/scamcalldetector
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
 
       - name: Set up local properties
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Set up Gradle
+        script: |
+          cd $CM_BUILD_DIR
+          # Download and install Gradle
+          wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip
+          unzip -q gradle-7.6-bin.zip
+          export GRADLE_HOME=$CM_BUILD_DIR/gradle-7.6
+          export PATH=$GRADLE_HOME/bin:$PATH
+          
+          # Verify Gradle installation
+          gradle -v
+          
+          # Generate Gradle wrapper files
+          gradle wrapper
+          
+          # Make wrapper executable
+          chmod +x gradlew
+          
+          # Verify wrapper
+          ./gradlew -v
       
       - name: Build Android app
         script: |
           cd $CM_BUILD_DIR
-          # Clean and build
+          # Clean and build debug APK (no signing)
           ./gradlew clean assembleDebug --stacktrace
           
       - name: Run tests
@@ -59,7 +72,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
