@@ -6,9 +6,9 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
-        GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain"
+        GRADLE_OPTS: "-Dorg.gradle.logging.level=debug -Dorg.gradle.console=plain -Dorg.gradle.warning.mode=all"
       java: 11
-    
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -121,7 +121,7 @@ workflows:
         script: |
           cd $CM_BUILD_DIR
           # Show full error output
-          ./gradlew clean assembleDebug --console=plain --stacktrace --info --scan
+          ./gradlew clean assembleDebug --console=plain --stacktrace --info
           
       - name: Run tests
         script: |
@@ -135,7 +135,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
