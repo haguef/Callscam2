@@ -25,6 +25,8 @@ import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.speech.v1.SpeechSettings
 import com.google.cloud.speech.v1.StreamingRecognitionConfig
 import com.google.cloud.speech.v1.StreamingRecognizeRequest
+import com.google.cloud.speech.v1.StreamingRecognizeResponse
+import com.google.api.gax.rpc.ApiStreamObserver
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -170,7 +172,28 @@ class CallDetectionService : InCallService() {
             .setInterimResults(true)
             .build()
 
-        val requestObserver = speechClient?.streamingRecognizeCallable()?.bidiStreamingCall()
+        val responseObserver = object : ApiStreamObserver<StreamingRecognizeResponse> {
+            override fun onNext(response: StreamingRecognizeResponse) {
+                val transcription = response.resultsList
+                    .flatMap { it.alternativesList }
+                    .firstOrNull()
+                    ?.transcript ?: ""
+                if (transcription.isNotEmpty()) {
+                    emit(transcription)
+                }
+            }
+
+            override fun onError(t: Throwable) {
+                t.printStackTrace()
+            }
+
+            override fun onCompleted() {
+                // Stream completed
+            }
+        }
+
+        val requestObserver = speechClient?.streamingRecognizeCallable()
+            ?.bidiStreamingCall(responseObserver)
 
         requestObserver?.onNext(
             StreamingRecognizeRequest.newBuilder()
