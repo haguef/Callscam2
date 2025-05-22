@@ -33,8 +33,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.channels.awaitClose
 
 class CallDetectionService : InCallService() {
     private var currentCall: Call? = null
@@ -160,7 +162,7 @@ class CallDetectionService : InCallService() {
         audioRecord = null
     }
 
-    private fun processAudioStream(): Flow<String> = flow {
+    private fun processAudioStream(): Flow<String> = channelFlow {
         val recognitionConfig = RecognitionConfig.newBuilder()
             .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
             .setSampleRateHertz(16000)
@@ -179,16 +181,17 @@ class CallDetectionService : InCallService() {
                     .firstOrNull()
                     ?.transcript ?: ""
                 if (transcription.isNotEmpty()) {
-                    emit(transcription)
+                    trySend(transcription)
                 }
             }
 
             override fun onError(t: Throwable) {
                 t.printStackTrace()
+                close(t)
             }
 
             override fun onCompleted() {
-                // Stream completed
+                close()
             }
         }
 
@@ -214,6 +217,10 @@ class CallDetectionService : InCallService() {
         }
 
         requestObserver?.onCompleted()
+        
+        awaitClose {
+            requestObserver?.onCompleted()
+        }
     }
 
     private fun checkForScamKeywords(transcription: String) {
