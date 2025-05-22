@@ -6,8 +6,9 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
+        GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
       java: 11
-    
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -29,15 +30,13 @@ workflows:
           mkdir -p app/src/main/java/com/example/scamcalldetector
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
-
-      - name: Set up local properties
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+          mkdir -p app/src/main/res/drawable
 
       - name: Create Gradle wrapper
         script: |
           cd $CM_BUILD_DIR
           # Create wrapper files
+          mkdir -p gradle/wrapper
           echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
           echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
           echo "distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
@@ -45,7 +44,6 @@ workflows:
           echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
           
           # Download wrapper jar
-          mkdir -p gradle/wrapper
           curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradle/wrapper/gradle-wrapper.jar
           
           # Create gradlew script
@@ -55,20 +53,72 @@ workflows:
           
           # Create gradlew.bat
           curl -L -o gradlew.bat https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradlew.bat
+
+      - name: Set up local properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+
+      - name: Create basic Android resources
+        script: |
+          cd $CM_BUILD_DIR
+          # Create basic layout file
+          mkdir -p app/src/main/res/layout
+          echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/layout/activity_main.xml
+          echo '<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"' >> app/src/main/res/layout/activity_main.xml
+          echo '    android:layout_width="match_parent"' >> app/src/main/res/layout/activity_main.xml
+          echo '    android:layout_height="match_parent">' >> app/src/main/res/layout/activity_main.xml
+          echo '</androidx.constraintlayout.widget.ConstraintLayout>' >> app/src/main/res/layout/activity_main.xml
           
-          # Verify wrapper
-          ./gradlew --version
-      
+          # Create strings.xml
+          mkdir -p app/src/main/res/values
+          echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/res/values/strings.xml
+          echo '<resources>' >> app/src/main/res/values/strings.xml
+          echo '    <string name="app_name">Scam Call Detector</string>' >> app/src/main/res/values/strings.xml
+          echo '</resources>' >> app/src/main/res/values/strings.xml
+          
+          # Create AndroidManifest.xml
+          mkdir -p app/src/main
+          echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
+          echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android">' >> app/src/main/AndroidManifest.xml
+          echo '    <application' >> app/src/main/AndroidManifest.xml
+          echo '        android:allowBackup="true"' >> app/src/main/AndroidManifest.xml
+          echo '        android:icon="@mipmap/ic_launcher"' >> app/src/main/AndroidManifest.xml
+          echo '        android:label="@string/app_name"' >> app/src/main/AndroidManifest.xml
+          echo '        android:supportsRtl="true"' >> app/src/main/AndroidManifest.xml
+          echo '        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">' >> app/src/main/AndroidManifest.xml
+          echo '        <activity android:name=".MainActivity" android:exported="true">' >> app/src/main/AndroidManifest.xml
+          echo '            <intent-filter>' >> app/src/main/AndroidManifest.xml
+          echo '                <action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
+          echo '                <category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
+          echo '            </intent-filter>' >> app/src/main/AndroidManifest.xml
+          echo '        </activity>' >> app/src/main/AndroidManifest.xml
+          echo '    </application>' >> app/src/main/AndroidManifest.xml
+          echo '</manifest>' >> app/src/main/AndroidManifest.xml
+          
+          # Create MainActivity.kt
+          mkdir -p app/src/main/java/com/example/scamcalldetector
+          echo 'package com.example.scamcalldetector' > app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo 'import androidx.appcompat.app.AppCompatActivity' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo 'import android.os.Bundle' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo 'class MainActivity : AppCompatActivity() {' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '    override fun onCreate(savedInstanceState: Bundle?) {' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '        super.onCreate(savedInstanceState)' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '        setContentView(R.layout.activity_main)' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '    }' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+          echo '}' >> app/src/main/java/com/example/scamcalldetector/MainActivity.kt
+
       - name: Build Android app
         script: |
           cd $CM_BUILD_DIR
-          # Clean and build debug APK (no signing)
-          ./gradlew clean assembleDebug --stacktrace
+          # Show full error output
+          ./gradlew clean assembleDebug --info --stacktrace --debug
           
       - name: Run tests
         script: |
           cd $CM_BUILD_DIR
-          ./gradlew test --stacktrace
+          ./gradlew test --info --stacktrace
           
     artifacts:
       - app/build/outputs/apk/debug/*.apk
@@ -76,7 +126,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
