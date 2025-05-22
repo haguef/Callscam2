@@ -7,7 +7,7 @@ workflows:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
       java: 11
-    
+      android_sdk: 33
     cache:
       cache_paths:
         - $HOME/.gradle/caches
@@ -34,26 +34,30 @@ workflows:
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
 
-      - name: Set up Gradle
+      - name: Create Gradle wrapper
         script: |
           cd $CM_BUILD_DIR
-          # Download and install Gradle
-          wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip
-          unzip -q gradle-7.6-bin.zip
-          export GRADLE_HOME=$CM_BUILD_DIR/gradle-7.6
-          export PATH=$GRADLE_HOME/bin:$PATH
+          # Create wrapper files
+          echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
           
-          # Verify Gradle installation
-          gradle -v
+          # Download wrapper jar
+          mkdir -p gradle/wrapper
+          curl -L -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradle/wrapper/gradle-wrapper.jar
           
-          # Generate Gradle wrapper files
-          gradle wrapper
-          
-          # Make wrapper executable
+          # Create gradlew script
+          echo '#!/usr/bin/env sh' > gradlew
+          curl -L https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradlew >> gradlew
           chmod +x gradlew
           
+          # Create gradlew.bat
+          curl -L -o gradlew.bat https://raw.githubusercontent.com/gradle/gradle/v7.6.0/gradlew.bat
+          
           # Verify wrapper
-          ./gradlew -v
+          ./gradlew --version
       
       - name: Build Android app
         script: |
@@ -72,7 +76,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - paulf.hague@gmail.com
+          - user@example.com
         notify:
           success: true
           failure: true 
