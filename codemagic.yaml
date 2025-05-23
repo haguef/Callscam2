@@ -6,8 +6,6 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
-      android:
-        image: android:latest
     scripts:
       - name: Set up local.properties
         script: |
