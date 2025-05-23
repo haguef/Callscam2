@@ -132,10 +132,20 @@ class CallDetectionService : InCallService() {
 
     private fun initializeSpeechClient() {
         try {
-            speechClient = SpeechClient.create()
+            // Load credentials from raw resource
+            val credentials = GoogleCredentials.fromStream(resources.openRawResource(R.raw.speech_credentials))
+            
+            // Create speech settings with credentials
+            val speechSettings = SpeechSettings.newBuilder()
+                .setCredentialsProvider { credentials }
+                .build()
+                
+            // Initialize speech client with credentials
+            speechClient = SpeechClient.create(speechSettings)
+            
         } catch (e: Exception) {
             e.printStackTrace()
-            showToast("Error: Failed to initialize speech recognition")
+            showToast("Error: Failed to initialize speech recognition: ${e.message}")
         }
     }
 
