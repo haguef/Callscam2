@@ -1,5 +1,6 @@
 package com.example.scamcalldetector
 
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,6 +9,8 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.telecom.Call
@@ -16,6 +19,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.PopupWindow
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import com.example.scamcalldetector.databinding.ActivityMainBinding
@@ -49,18 +53,10 @@ class CallDetectionService : InCallService() {
     private lateinit var binding: ActivityMainBinding
     private val NOTIFICATION_CHANNEL_ID = "ScamDetectorChannel"
     private val NOTIFICATION_ID = 1
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private val scamKeywords = listOf(
-        "urgent",
-        "gift card",
-        "transfer",
-        "social security",
-        "warranty",
-        "irs",
-        "tax",
-        "fraud department",
-        "microsoft support",
-        "apple support"
+        "gift card"
     )
 
     override fun onCreate() {
@@ -73,6 +69,7 @@ class CallDetectionService : InCallService() {
         super.onCallAdded(call)
         currentCall = call
         setupCallStateCallback(call)
+        showSpeakerphonePrompt()
     }
 
     override fun onCallRemoved(call: Call) {
@@ -81,7 +78,6 @@ class CallDetectionService : InCallService() {
         currentCall = null
         speechClient?.close()
         speechClient = null
-        dismissWarning()
     }
 
     private fun createNotificationChannel() {
@@ -98,6 +94,30 @@ class CallDetectionService : InCallService() {
         }
     }
 
+    private fun showSpeakerphonePrompt() {
+        mainHandler.post {
+            Toast.makeText(this, "Would you like to enable speaker phone?", Toast.LENGTH_LONG).show()
+            AlertDialog.Builder(this)
+                .setTitle("Speaker Phone")
+                .setMessage("Would you like to enable speaker phone?")
+                .setPositiveButton("Yes") { _, _ ->
+                    toggleSpeakerphone(true)
+                }
+                .setNegativeButton("No") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
+    }
+
+    private fun toggleSpeakerphone(enabled: Boolean) {
+        currentCall?.let { call ->
+            call.details.callAudioState?.let { audioState ->
+                setAudioRoute(if (enabled) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_EARPIECE)
+            }
+        }
+    }
+
     private fun setupCallStateCallback(call: Call) {
         call.registerCallback(object : Call.Callback() {
             override fun onStateChanged(call: Call, state: Int) {
@@ -111,20 +131,32 @@ class CallDetectionService : InCallService() {
 
     private fun initializeSpeechClient() {
         try {
-            // For testing without credentials
             speechClient = SpeechClient.create()
-            
-            // TODO: For production, uncomment and use proper credentials
-            /*
-            val credentials = GoogleCredentials.fromStream(resources.openRawResource(R.raw.credentials))
-            val speechSettings = SpeechSettings.newBuilder()
-                .setCredentialsProvider { credentials }
-                .build()
-            speechClient = SpeechClient.create(speechSettings)
-            */
         } catch (e: Exception) {
             e.printStackTrace()
-            showNotification("Error", "Failed to initialize speech recognition")
+            showToast("Error: Failed to initialize speech recognition")
+        }
+    }
+
+    private fun showToast(message: String) {
+        mainHandler.post {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showScamAlert() {
+        mainHandler.post {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ SCAM CALL ALERT!")
+                .setMessage("Gift card scam detected! Would you like to end the call?")
+                .setPositiveButton("End Call") { _, _ ->
+                    currentCall?.disconnect()
+                }
+                .setNegativeButton("Continue") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .setCancelable(false)
+                .show()
         }
     }
 
@@ -229,53 +261,15 @@ class CallDetectionService : InCallService() {
     private fun checkForScamKeywords(transcription: String) {
         val lowercaseTranscription = transcription.lowercase()
         
+        // Show real-time transcription
+        showToast("Transcription: $transcription")
+        
         for (keyword in scamKeywords) {
             if (lowercaseTranscription.contains(keyword)) {
-                showScamWarning(keyword)
+                showScamAlert()
                 vibrate()
                 return
             }
-        }
-
-        // Update transcription text
-        binding.transcriptionText.post {
-            binding.transcriptionText.text = transcription
-        }
-    }
-
-    private fun showScamWarning(keyword: String) {
-        showNotification(
-            "⚠️ Potential Scam Detected!",
-            "Suspicious keyword detected: $keyword"
-        )
-    }
-
-    private fun showNotification(title: String, message: String) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setSmallIcon(R.drawable.ic_warning)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(NOTIFICATION_ID, notification)
-    }
-
-    private fun dismissWarning() {
-        binding.warningCard.post {
-            binding.warningCard.visibility = android.view.View.GONE
         }
     }
 
