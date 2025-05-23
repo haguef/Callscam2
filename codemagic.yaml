@@ -6,9 +6,6 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
-        # Add a reference to the encrypted credentials
-        # You will set this in Codemagic UI as an encrypted environment variable
-        GOOGLE_CLOUD_CREDENTIALS: Encrypted(...)
     scripts:
       - name: Set up local.properties
         script: |
