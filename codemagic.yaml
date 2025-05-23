@@ -6,10 +6,16 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
+      android:
+        image: android:latest
     scripts:
       - name: Set up local.properties
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$FCI_BUILD_DIR/local.properties"
+      - name: Create raw directory and set up Google Cloud credentials
+        script: |
+          mkdir -p "$FCI_BUILD_DIR/app/src/main/res/raw"
+          echo "$GOOGLE_CLOUD_CREDENTIALS" | base64 --decode > "$FCI_BUILD_DIR/app/src/main/res/raw/credentials.json"
       - name: Set up Gradle
         script: |
           cd $FCI_BUILD_DIR
