@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Build
@@ -14,6 +15,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.telecom.Call
+import android.telecom.CallAudioState
 import android.telecom.InCallService
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -111,10 +113,9 @@ class CallDetectionService : InCallService() {
     }
 
     private fun toggleSpeakerphone(enabled: Boolean) {
-        currentCall?.let { call ->
-            call.details.callAudioState?.let { audioState ->
-                setAudioRoute(if (enabled) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_EARPIECE)
-            }
+        val audioState = callAudioState
+        if (audioState != null) {
+            setAudioRoute(if (enabled) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_WIRED_OR_EARPIECE)
         }
     }
 
