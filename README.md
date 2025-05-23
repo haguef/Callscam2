@@ -18,11 +18,45 @@ An Android application that helps detect potential scam calls using real-time sp
 
 ## Setup
 
+### Google Cloud Credentials
+
+⚠️ **IMPORTANT: Security Notice** ⚠️
+
+The app requires Google Cloud Speech-to-Text credentials to function. These credentials must be kept private and should never be committed to version control.
+
+1. Create a service account in Google Cloud Console:
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project or select an existing one
+   - Enable the Speech-to-Text API
+   - Create a service account
+   - Download the JSON credentials file
+
+2. Place the credentials:
+   - Save the downloaded JSON file as `credentials.json`
+   - Place it in `app/src/main/assets/credentials.json`
+   - This file is gitignored and should never be committed
+
+### Development Setup
+
 1. Clone the repository
-2. Open the project in Android Studio
-3. Add your Google Cloud credentials file to `app/src/main/res/raw/credentials.json`
-4. Update the `applicationId` in `app/build.gradle` if needed
-5. Build and run the application
+2. Place your `credentials.json` file as described above
+3. Open the project in Android Studio
+4. Build and run
+
+### CI/CD Setup
+
+For CI/CD environments, do NOT commit the credentials file. Instead:
+1. Store the credentials content as an encrypted environment variable
+2. During build, decode the credentials into the correct location
+3. Ensure the credentials file is excluded from any artifacts
+
+## Security Best Practices
+
+- Never commit credentials to version control
+- Keep your service account credentials private
+- Regularly rotate your service account keys
+- Use the principle of least privilege for service accounts
+- Monitor your Google Cloud Console for any unauthorized usage
 
 ## Required Permissions
 

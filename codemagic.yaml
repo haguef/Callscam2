@@ -6,14 +6,17 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.example.scamcalldetector"
+        # Add a reference to the encrypted credentials
+        # You will set this in Codemagic UI as an encrypted environment variable
+        GOOGLE_CLOUD_CREDENTIALS: Encrypted(...)
     scripts:
       - name: Set up local.properties
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$FCI_BUILD_DIR/local.properties"
-      - name: Create raw directory and set up Google Cloud credentials
+      - name: Create assets directory and decode credentials
         script: |
-          mkdir -p "$FCI_BUILD_DIR/app/src/main/res/raw"
-          echo "$GOOGLE_CLOUD_CREDENTIALS" | base64 --decode > "$FCI_BUILD_DIR/app/src/main/res/raw/credentials.json"
+          mkdir -p "$FCI_BUILD_DIR/app/src/main/assets"
+          echo "$GOOGLE_CLOUD_CREDENTIALS" > "$FCI_BUILD_DIR/app/src/main/assets/credentials.json"
       - name: Set up Gradle
         script: |
           cd $FCI_BUILD_DIR
