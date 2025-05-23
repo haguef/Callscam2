@@ -133,7 +133,7 @@ class CallDetectionService : InCallService() {
     private fun initializeSpeechClient() {
         try {
             // Load credentials from raw resource
-            val credentials = GoogleCredentials.fromStream(resources.openRawResource(R.raw.speech_credentials))
+            val credentials = GoogleCredentials.fromStream(resources.openRawResource(R.raw.credentials))
             
             // Create speech settings with credentials
             val speechSettings = SpeechSettings.newBuilder()
