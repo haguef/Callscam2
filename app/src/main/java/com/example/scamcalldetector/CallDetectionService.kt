@@ -132,8 +132,15 @@ class CallDetectionService : InCallService() {
 
     private fun initializeSpeechClient() {
         try {
-            // Load credentials from raw resource
-            val credentials = GoogleCredentials.fromStream(resources.openRawResource(R.raw.credentials))
+            // Load credentials from assets
+            val inputStream = assets.open("credentials.json")
+            val credentials = try {
+                GoogleCredentials.fromStream(inputStream)
+            } catch (e: Exception) {
+                throw IllegalStateException("Failed to parse credentials.json: ${e.message}", e)
+            } finally {
+                inputStream.close()
+            }
             
             // Create speech settings with credentials
             val speechSettings = SpeechSettings.newBuilder()
@@ -142,10 +149,12 @@ class CallDetectionService : InCallService() {
                 
             // Initialize speech client with credentials
             speechClient = SpeechClient.create(speechSettings)
+            showToast("Speech client initialized successfully")
             
         } catch (e: Exception) {
+            val errorMessage = "Speech recognition initialization failed: ${e.message}"
             e.printStackTrace()
-            showToast("Error: Failed to initialize speech recognition: ${e.message}")
+            showToast(errorMessage)
         }
     }
 
