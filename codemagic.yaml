@@ -1,0 +1,41 @@
+workflows:
+  android-app:
+    name: Android App
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      vars:
+        PACKAGE_NAME: "com.example.scamcalldetector"
+        # Add a reference to the encrypted credentials
+        # You will set this in Codemagic UI as an encrypted environment variable
+        GOOGLE_CLOUD_CREDENTIALS: Encrypted(...)
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$FCI_BUILD_DIR/local.properties"
+      - name: Create assets directory and decode credentials
+        script: |
+          mkdir -p "$FCI_BUILD_DIR/app/src/main/assets"
+          echo "$GOOGLE_CLOUD_CREDENTIALS" > "$FCI_BUILD_DIR/app/src/main/assets/credentials.json"
+      - name: Set up Gradle
+        script: |
+          cd $FCI_BUILD_DIR
+          gradle wrapper
+      - name: Clean build directory
+        script: |
+          cd $FCI_BUILD_DIR
+          chmod +x ./gradlew
+          ./gradlew clean
+      - name: Build Android app
+        script: |
+          cd $FCI_BUILD_DIR
+          ./gradlew assembleDebug
+    artifacts:
+      - app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - paulf.hague@gmail.com
+        notify:
+          success: true
+          failure: true 

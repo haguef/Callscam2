@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098936055504",
+    "project_id": "bd-android-pwa-6cb04",
+    "storage_bucket": "bd-android-pwa-6cb04.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098936055504:android:68f04ee9e92015f41c90d5",
+        "android_client_info": {
+          "package_name": "com.blackdice.endpoint.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7jLa7TkxdqoKB1fxiHLZBIVQ_G2JzZ6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

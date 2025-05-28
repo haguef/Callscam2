@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Scam Call Detector</string>
+    <string name="scam_warning_title">⚠️ SCAM DETECTED!</string>
+    <string name="permissions_required">All permissions are required for the app to function properly</string>
+    <string name="transcription_placeholder">Call transcription will appear here…</string>
+</resources> 
