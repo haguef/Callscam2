@@ -95,8 +95,7 @@ class CallDetectionService : InCallService() {
         currentCall = call
 
         setupCallStateCallback(call)
-        showSpeakerphonePrompt()
-    }
+       }
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
@@ -115,29 +114,6 @@ class CallDetectionService : InCallService() {
         }
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
-    }
-
-    private fun showSpeakerphonePrompt() {
-//        val intent = Intent(this@CallDetectionService, CallerActivity::class.java)
-//        intent.setFlags(FLAG_ACTIVITY_NEW_TASK)
-//        startActivity(intent)
-
-        Log.i(TAG, "Prompt showing...")
-
-//            mainHandler.post {
-//            Toast.makeText(this, "Would you like to enable speaker phone?", Toast.LENGTH_LONG)
-//                .show()
-//            AlertDialog.Builder(this)
-//                .setTitle("Speaker Phone")
-//                .setMessage("Would you like to enable speaker phone?")
-//                .setPositiveButton("Yes") { _, _ ->
-//                    toggleSpeakerphone(true)
-//                }
-//                .setNegativeButton("No") { dialog, _ ->
-//                    dialog.dismiss()
-//                }
-//                .show()
-//        }
     }
 
     private fun toggleSpeakerphone(enabled: Boolean) {
@@ -161,12 +137,12 @@ class CallDetectionService : InCallService() {
                         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                         audioManager.mode = AudioManager.MODE_IN_CALL
                         audioManager.isSpeakerphoneOn = true
-//                        startRecording()
+                        startRecording()
                     }
 
                     Call.STATE_DISCONNECTED -> {
                         Log.i(TAG, "Call ended")
-//                        stopRecording()
+                        stopRecording()
                     }
 
                     Call.STATE_AUDIO_PROCESSING -> {

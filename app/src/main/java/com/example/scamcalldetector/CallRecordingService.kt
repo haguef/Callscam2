@@ -59,13 +59,7 @@ class CallRecordingService : Service() {
         startForegroundService()
 //        requestAudioFocus()
 
-        var recordingJob = GlobalScope.launch {
-            delay(1000)
-            stopForeground(STOP_FOREGROUND_REMOVE)
             startRecording()
-        }
-
-        recordingJob.start()
 
         var job = GlobalScope.launch {
             delay(10000)
